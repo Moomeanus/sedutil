@@ -39,12 +39,26 @@ int main(int argc, char** argv) {
     LOG(D4) << "Legacy PBA start" << endl;
 //    system ("tput clear");
     printf("DTA LINUX Pre Boot Authorization \n");
+    system("setleds -num -caps +scroll"); // show scoll lock LED to indicate "ready to enter password"
     string p = GetPassPhrase("Please enter pass-phrase to unlock OPAL drives: ");
-    UnlockSEDs((char *)p.c_str());
+    int failed_anyone = UnlockSEDs((char *)p.c_str());
+    if (failed_anyone) {
+        system("setleds +num +caps +scroll");
+        usleep(500000);
+        system("setleds -num -caps -scroll");
+        usleep(500000);
+        system("setleds +num +caps +scroll");
+    } else { // all OK
+        system("setleds -num +caps -scroll");
+        usleep(500000);
+        system("setleds +num -caps +scroll");
+        usleep(500000);
+        system("setleds -num +caps +scroll");
+    }
     if (strcmp(p.c_str(), "debug")) {
         printf("Starting OS \n");
         sync();
-        usleep(5000000); // give the user time to see results
+        usleep(1000000); // give the user time to see results but don't wait for too long
         reboot(RB_AUTOBOOT);
     }
     return 0;
